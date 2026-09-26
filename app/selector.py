@@ -5,9 +5,8 @@ import json
 import os
 import re
 import shutil
-from pathlib import Path, PurePosixPath
-from typing import Iterable
-
+from collections.abc import Iterable
+from pathlib import Path
 
 SOURCE_ROOTS = (
     Path("/homeassistant"),
@@ -82,9 +81,10 @@ def matches(path: str, patterns: Iterable[str]) -> bool:
     normalized = path.replace("\\", "/")
     for raw in patterns:
         pattern = normalize_pattern(raw)
-        if pattern.endswith("/"):
-            if normalized == pattern[:-1] or normalized.startswith(pattern):
-                return True
+        if pattern.endswith("/") and (
+            normalized == pattern[:-1] or normalized.startswith(pattern)
+        ):
+            return True
         if fnmatch.fnmatchcase(normalized, pattern):
             return True
     return False
@@ -128,10 +128,7 @@ def should_copy(
     if matches(absolute_source, exclude) and not (explicitly_included or include_override):
         return False
 
-    if source.is_file() and is_probably_binary(source):
-        return False
-
-    return True
+    return not (source.is_file() and is_probably_binary(source))
 
 
 def _copy_symlink(source: Path, destination: Path) -> None:
@@ -193,10 +190,8 @@ def copy_explicit_includes(
     for raw_pattern in patterns:
         pattern = normalize_pattern(raw_pattern)
         if not (
-            pattern.startswith("/homeassistant/")
-            or pattern == "/homeassistant"
-            or pattern.startswith("/addon_configs/")
-            or pattern == "/addon_configs"
+            pattern in {"/homeassistant", "/addon_configs"}
+            or pattern.startswith(("/homeassistant/", "/addon_configs/"))
         ):
             print(f"WARNING: include outside approved roots skipped: {pattern}")
             continue
