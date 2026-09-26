@@ -26,32 +26,72 @@ Direct filesystem content keeps the real Home Assistant App mount hierarchy:
 
 Generated/API-derived data, when added later, belongs under `derived/`.
 
-## Configuration-visible ordinary excludes
+## Filtering model
 
-Ordinary excludes are defined in the App **Configuration** screen. They are user-editable and may be overridden by an explicit `include`.
+Filtering is deliberately split into three layers.
 
-The default profile is based on the proven production fj8 exporter and currently excludes:
+### 1. Built-in base policy
 
-- Home Assistant databases: `*.db`, `*.db-shm`, `*.db-wal`
-- logs: `*.log*`
-- compressed/runtime files: `*.gz`
-- Python caches: `__pycache__`
-- OS/editor noise: `._*`, `.DS_Store`
-- dependency/cache trees: `deps/`, `.cache/`
-- legacy/runtime paths: `known_devices.yaml`, `tts/`, `.ha_run.lock`
-- Zigbee2MQTT runtime data: `coordinator_backup.json`, `state.json`, `device_icons/`
-- ML runtime data: `ml_weather/data/`, `ml_weather/output/`, `ml_weather/models/`
-- Codex runtime/input data: `codex_input/`
-- generated/local media paths: `image/`
-- generated frontend/runtime content: `www/codex_cli_auth/`, `www/community/`, `www/calendars/`
-- the broad `codex_tasks/` tree, with only `*/task.json` restored by the default include rule
-- App dependency/runtime noise: `node_modules/`, `__pycache__/`, `*.backup`
+Known installation/runtime noise is excluded by the App itself. These rules are part of the product policy and therefore do not fill the Configuration screen with dozens of default chips.
 
-These are ordinary scope rules, not security controls. They are intentionally visible and editable.
+For `/homeassistant`, the built-in base policy excludes:
+
+- `*.db`, `*.db-shm`, `*.db-wal`
+- `*.log*`, `*.gz`
+- `**/__pycache__/**`, `**/._*`, `**/.DS_Store`
+- `**/deps/**`
+- `known_devices.yaml`, `tts/**`, `.cache/**`, `.ha_run.lock`
+- `zigbee2mqtt/coordinator_backup.json`, `zigbee2mqtt/state.json`, `zigbee2mqtt/device_icons/**`
+- `ml_weather/data/**`, `ml_weather/output/**`, `ml_weather/models/**`
+- `codex_input/**`, `image/**`
+- `www/codex_cli_auth/**`, `www/community/**`, `www/calendars/**`
+- the broad `codex_tasks/**` tree
+
+The built-in exception to that last rule restores:
+
+- `codex_tasks/*/task.json`
+
+For `/addon_configs`, the built-in base policy excludes:
+
+- `**/__pycache__/**`
+- `**/node_modules/**`
+- `**/*.backup`
+
+### 2. User exclude
+
+The Configuration screen starts with empty user filters.
+
+There are separate scopes:
+
+- **homeassistant** — paths are relative to `/homeassistant`
+- **addon_configs** — paths are relative to `/addon_configs`
+
+Examples:
+
+- `codex_input/**`
+- `zigbee2mqtt/device_icons/**`
+- `a0d7b954_nodered/cronplusdata/**`
+
+Do not repeat `/homeassistant/` or `/addon_configs/` in the UI.
+
+A user exclude can remove something that the built-in base policy would normally keep.
+
+### 3. User include
+
+User include is an exception mechanism, not a positive allow-list.
+
+Typical use:
+
+- exclude `some_folder/**`
+- include `some_folder/important.json`
+
+A user include may restore content excluded by the built-in ordinary policy, the default `.storage` scope, or a user exclude.
+
+It can never restore a hard security deny.
 
 ## Built-in hard security deny
 
-The following protections are implemented in code and **cannot be overridden by Configuration or include rules**:
+The following protections are implemented in code and **cannot be overridden** by Configuration or include rules:
 
 - Git metadata: `.git`
 - real `secrets.yaml` / `secret.yaml`
@@ -60,7 +100,7 @@ The following protections are implemented in code and **cannot be overridden by 
 - `.storage/core.config_entries`
 - `.storage/application_credentials`
 - `.storage/cloud`
-- Home Assistant `.cloud/`
+- Home Assistant `.cloud/**`
 - Node-RED credential files: `flows_cred*`
 - Node-RED user credential config: `.config.users.json*`
 - generic credential files: `credentials.json`, `credentials.*`
@@ -90,19 +130,20 @@ Default useful audit scope includes:
 
 This includes the entity, device, area, floor and label registries while avoiding authentication/runtime storage.
 
-Explicit include rules may add other non-hard-denied `.storage` files later.
+A user include may restore another safe `.storage` file when needed; hard-denied storage can never be restored.
 
-## Include / exclude precedence
+## Effective precedence
 
-Evaluation order:
+For each file:
 
 1. hard security deny;
-2. default `.storage` scope;
-3. Configuration `exclude`;
-4. explicit Configuration `include` may restore ordinary excluded/scope paths;
-5. hard security deny remains authoritative;
-6. sanitizers run;
-7. pre-push security scan runs.
+2. built-in base policy and built-in exception;
+3. user exclude;
+4. user include;
+5. sanitizers;
+6. final pre-push security scan.
+
+This gives the intended `exclude folder -> include selected file` behavior without making include an allow-list.
 
 ## Authentication
 
