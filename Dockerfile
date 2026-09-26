@@ -12,6 +12,8 @@ RUN apk add --no-cache \
       git \
       openssh-client
 
+ENV PYTHONUNBUFFERED=1
+
 WORKDIR /app
 
 COPY app/ /app/
