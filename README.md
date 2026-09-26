@@ -48,4 +48,4 @@ Selected `.storage` audit data is enabled by default. Built-in ordinary filterin
 
 ## Current phase
 
-**0.1.0-dev.6** — distribution-only update discovery validation on the native Home Assistant App repository.
+**0.1.0-dev.7** — Supervisor/App metadata parity plus export-noise cleanup before stable 0.1.0.
