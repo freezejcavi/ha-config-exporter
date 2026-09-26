@@ -180,14 +180,27 @@ def _parent_count(commit_sha: str, repository: Path) -> int:
     return sum(1 for line in content.splitlines() if line.startswith("parent "))
 
 
+def _staged_changes(repository: Path) -> list[str]:
+    output = run(
+        "git",
+        "diff",
+        "--cached",
+        "--name-status",
+        "--no-renames",
+        cwd=repository,
+    ).stdout
+    return [line for line in output.splitlines() if line.strip()]
+
+
 def publish_snapshot(
     repository: Path,
     *,
     config: RepositoryConfig,
     expected_remote_sha: str,
     dry_run: bool,
-) -> dict[str, str | bool | int]:
+) -> dict[str, object]:
     run("git", "add", "-A", cwd=repository)
+    changed_files = _staged_changes(repository)
     candidate_tree = run("git", "write-tree", cwd=repository).stdout.strip()
     remote_tree = _tree_sha(expected_remote_sha, repository)
     parents = _parent_count(expected_remote_sha, repository)
@@ -199,6 +212,7 @@ def publish_snapshot(
             "normalized_history": False,
             "tree_sha": candidate_tree,
             "remote_sha": expected_remote_sha,
+            "changed_files": changed_files,
         }
 
     normalized_history = candidate_tree == remote_tree and parents > 0
@@ -221,6 +235,7 @@ def publish_snapshot(
             "tree_sha": candidate_tree,
             "remote_sha": expected_remote_sha,
             "snapshot_sha": created,
+            "changed_files": changed_files,
         }
 
     ref = f"refs/heads/{config.branch_name}"
@@ -242,4 +257,5 @@ def publish_snapshot(
         "tree_sha": candidate_tree,
         "remote_sha": expected_remote_sha,
         "snapshot_sha": created,
+        "changed_files": changed_files,
     }
