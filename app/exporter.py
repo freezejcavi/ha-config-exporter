@@ -1,7 +1,5 @@
 from __future__ import annotations
 
-import json
-
 from config import load_config
 from gitmirror import (
     ensure_ssh_material,
@@ -9,10 +7,10 @@ from gitmirror import (
     public_key,
     publish_snapshot,
 )
-from logutil import error, footer, header, info, ok
+from logutil import changes, error, footer, header, info, ok
 from selector import build_mirror
 
-VERSION = "0.1.0-dev.2"
+VERSION = "0.1.0-dev.3"
 
 
 def main() -> int:
@@ -32,7 +30,6 @@ def main() -> int:
             )
 
         repository, expected_sha = prepare_repository(config.repository)
-        info(f"Remote baseline: {expected_sha}")
 
         stats = build_mirror(
             repository,
@@ -40,8 +37,8 @@ def main() -> int:
             include=config.include,
         )
         info(
-            "Prepared managed mirror: "
-            f"{stats['files']} file copies, {stats['symlinks']} symlinks"
+            f"Mirror prepared: {stats['files']} files, "
+            f"{stats['symlinks']} symlinks"
         )
 
         result = publish_snapshot(
@@ -50,10 +47,12 @@ def main() -> int:
             expected_remote_sha=expected_sha,
             dry_run=config.dry_run,
         )
-        info(json.dumps(result, indent=2, sort_keys=True))
+        changed_files = result.get("changed_files", [])
+        if isinstance(changed_files, list) and changed_files:
+            changes([str(item) for item in changed_files])
 
         if not result["changed"]:
-            ok("Mirror unchanged — no commit or push required.")
+            ok("No changes detected — nothing pushed.")
             footer(
                 f"HA Config Exporter {VERSION} — RUN END: SUCCESS / NO CHANGE",
                 success=True,
@@ -68,7 +67,8 @@ def main() -> int:
             )
             return 0
 
-        ok(f"Published root snapshot: {result['snapshot_sha']}")
+        snapshot = str(result["snapshot_sha"])
+        ok(f"GitHub snapshot published: {snapshot[:8]}")
         footer(
             f"HA Config Exporter {VERSION} — RUN END: SUCCESS",
             success=True,
