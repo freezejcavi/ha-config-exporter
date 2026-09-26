@@ -1,5 +1,5 @@
 name: HA Config Exporter
-version: 0.1.0-dev.8
+version: 0.1.0-dev.9
 slug: ha_config_exporter
 description: One-way Home Assistant configuration mirror for ChatGPT audit and guidance
 url: https://github.com/freezejcavi/ha-config-exporter
@@ -21,10 +21,20 @@ options:
     branch_name: main
     commit_message: Home Assistant Config Snapshot
   homeassistant:
-    include: []
+    include:
+      - custom_components/anime_benchmark/**
+      - custom_components/battery_health/**
+      - custom_components/**/manifest.json
+      - custom_components/**/strings.json
+      - custom_components/**/icons.json
+      - custom_components/**/*.yaml
+      - custom_components/**/*.yml
+      - custom_components/**/README.md
+      - custom_components/**/py.typed
+      - custom_components/**/translations/en.json
+      - custom_components/**/translations/cs.json
     exclude:
-      - custom_components/hacs/hacs_frontend/**
-      - codex_tasks/**
+      - custom_components/**
   addon_configs:
     include:
       - a0d7b954_nodered/flows.json
