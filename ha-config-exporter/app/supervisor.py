@@ -39,7 +39,7 @@ def _api_get(path: str) -> object:
     )
 
     try:
-        with urlopen(request, timeout=30) as response:  # noqa: S310 - fixed local API
+        with urlopen(request, timeout=30) as response:
             payload = json.loads(response.read().decode("utf-8"))
     except HTTPError as err:
         raise RuntimeError(
@@ -139,13 +139,13 @@ def _write_json(path: Path, value: object) -> None:
 def write_app_metadata(repository_root: Path) -> int:
     addons_payload = _api_get("/addons")
     if not isinstance(addons_payload, dict):
-        raise RuntimeError(
+        raise TypeError(
             "Supervisor API /addons returned an unexpected payload"
         )
 
     raw_addons = addons_payload.get("addons")
     if not isinstance(raw_addons, list):
-        raise RuntimeError(
+        raise TypeError(
             "Supervisor API /addons did not return an addons list"
         )
 
@@ -164,7 +164,7 @@ def write_app_metadata(repository_root: Path) -> int:
     for slug in slugs:
         info = _api_get(f"/addons/{slug}/info")
         if not isinstance(info, dict):
-            raise RuntimeError(
+            raise TypeError(
                 f"Supervisor API /addons/{slug}/info returned "
                 "an unexpected payload"
             )
@@ -176,7 +176,7 @@ def write_app_metadata(repository_root: Path) -> int:
 
     repositories_payload = _api_get("/store/repositories")
     if not isinstance(repositories_payload, list):
-        raise RuntimeError(
+        raise TypeError(
             "Supervisor API /store/repositories returned "
             "an unexpected payload"
         )
