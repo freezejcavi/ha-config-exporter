@@ -4,254 +4,125 @@
 
 Build a purpose-built Home Assistant configuration exporter for ChatGPT audit/guidance.
 
-The exporter is not a backup, disaster-recovery mechanism, or GitOps source. Live Home Assistant and Node-RED remain the source of truth. Git contains only a current selected mirror for inspection.
+The exporter is not a backup, disaster-recovery mechanism, or GitOps source. Live Home Assistant and Node-RED remain the source of truth.
 
-## Current release state
+## Final release state
 
-- App version: `0.1.0-dev.6`
-- Source repository: `freezejcavi/ha-config-exporter`
-- Distribution: standard Home Assistant custom App repository
-- Source repository visibility: public
-- Test mirror: `freezejcavi/home-assistant-config-v2-test` (private)
-- Production mirror: `freezejcavi/home-assistant-config` (private, still owned by the old exporter workflow)
-- Native Home Assistant update discovery: verified end-to-end with dev.5 -> dev.6
-- Latest successful dev.6 test snapshot: `1a884cb37bd01267af3ffca7fbffc32454a2c429`
-- Snapshot parent count: 0
-- Snapshot model therefore remains parentless/root-only as designed
+- stable App: `0.1.1`
+- source: `freezejcavi/ha-config-exporter`
+- production mirror: `freezejcavi/home-assistant-config`
+- production App slug: `e3fcb3fb_ha_config_exporter`
+- latest accepted production snapshot: `6ea85ad5`
+- prepared mirror: **226 files, 0 symlinks**
+- second validation run: **SUCCESS / NO CHANGE**
+- distribution: native Home Assistant custom App repository
+- authentication: persistent repository-scoped SSH Deploy Key
+- publishing: one parentless/root commit per changed snapshot
 
-## Completed architecture
+## Final architecture
 
 ### Source hierarchy
 
-Direct filesystem data keeps its truthful source hierarchy:
+- `/homeassistant/... -> homeassistant/...`
+- `/addon_configs/... -> addon_configs/...`
+- Supervisor/API-derived content -> `derived/...`
 
-- `/homeassistant/...` -> `homeassistant/...`
-- `/addon_configs/...` -> `addon_configs/...`
-- API-derived/synthetic content is reserved for `derived/...`
+Repository-only files outside managed roots are preserved.
 
-Repository-only content outside managed roots is preserved.
+### Snapshot model
 
-### Snapshot publishing
+Every changed run publishes a fresh parentless/root commit.
 
-Each changed export creates a fresh parentless/root commit. No Git history chain is kept.
-
-No-change runs do not publish.
-
-### Authentication
-
-The exporter uses a dedicated persistent Ed25519 SSH Deploy Key scoped to the target mirror repository with write permission.
-
-No GitHub PAT is stored in App options.
+If the resulting tree is identical, nothing is pushed.
 
 ### Filtering
 
-Filtering has three layers:
+Filtering layers:
 
 1. hard security deny;
-2. built-in ordinary base exclusions;
-3. user exclude/include overrides for safe content.
+2. built-in ordinary exclusions;
+3. user exclude;
+4. user include exception;
+5. sanitizers;
+6. final content scan.
 
-User include is an exception mechanism, not an allow-list.
+Built-in HA noise exclusions include databases, logs, caches, `node_modules`, backup files, Zigbee2MQTT runtime state, weather-model data/output/model artifacts, auth/codex input/runtime folders, and broad Codex task contents.
 
-### Sanitization
+Only `codex_tasks/*/task.json` is restored for later analysis.
 
-- `homeassistant/secrets.yaml`: key names retained, values blank
-- Zigbee2MQTT `mqtt.password`: `<redacted>`
-- Zigbee2MQTT `advanced.network_key`: `<redacted>`
+### Custom integrations
 
-### Security verification
+Locally developed integrations remain full-source:
 
-Current dev.6 mirror was checked for:
+- `battery_health`
+- `anime_benchmark`
 
-- hard-denied credential/private-key paths
-- GitHub PAT/token signatures
-- OpenSSH/RSA private-key signatures
-- raw `access_token` / `refresh_token` search hits
+Third-party custom integrations are metadata-only. The mirror retains canonical metadata such as manifests, strings/icons, YAML descriptors and EN/CS translations.
 
-No blocking leak was found.
+`derived/custom_components/index.json` records:
 
-### Logging
+- domain/name
+- version
+- upstream source
+- requirements
+- export mode
+- installed-tree SHA-256
+- nested integration/link information
 
-Normal logs show:
+This keeps the mirror lean while preserving exact provenance for upstream reconstruction.
 
-- mirror file/symlink count
-- actual Git delta with A/M/D paths
-- no-change result
-- published short SHA
-- explicit RUN START / RUN END
+### Home Assistant Apps
 
-## Native Home Assistant distribution migration
+Installed Apps are discovered dynamically through the Supervisor API and exported under:
 
-The original local-App development model was removed.
+- `derived/apps/<slug>.json`
+- `derived/apps/repositories.json`
 
-The repository now uses standard Home Assistant custom App repository layout:
+No hard-coded App list is used.
 
-```text
-repository.yaml
-ha-config-exporter/
-  config.yaml
-  Dockerfile
-  DOCS.md
-  CHANGELOG.md
-  app/
-  translations/
-```
+### Node-RED
 
-The temporary standalone updater App and local update helper were removed.
+The final allowlist retains only:
 
-The native repository update path was verified:
+- `flows.json`
+- `settings.js`
+- `package.json`
+- `package-lock.json`
 
-`0.1.0-dev.5 -> 0.1.0-dev.6`
+Runtime context, websocket state, generated registries and backups are excluded.
 
-Home Assistant discovered and installed the update through the normal System/Updates mechanism. The exporter then ran successfully after update.
+## Release history completed today
 
-## A/B content parity audit
+- dev.5: native App repository packaging
+- dev.6: update-discovery verification
+- dev.7: Supervisor/App metadata and runtime-noise cleanup
+- dev.8: s6 `with-contenv` fix for `SUPERVISOR_TOKEN`
+- dev.9: lean analytical mirror + component provenance + restored Codex task records
+- 0.1.0: first stable release with explicit mirror target
+- 0.1.1: guarded cleanup of legacy production mirror roots
 
-Compared:
+## Production cutover
 
-- old production mirror: `freezejcavi/home-assistant-config`
-- new dev.6 test mirror: `freezejcavi/home-assistant-config-v2-test`
+The new exporter was pointed at `freezejcavi/home-assistant-config` and successfully published the new analytical layout.
 
-Path normalization used:
+The first 0.1.1 run removed 2233 legacy-path changes and produced snapshot `6ea85ad5`.
 
-- old `config/...` == new `homeassistant/...`
+A second immediate run returned no change, proving deterministic output.
 
-Counts:
+Legacy roots removed:
 
-- old mirror files: 2234
-- dev.6 mirror files: 2188
-- old-only after path normalization: 57
-- new-only: 11
+- `config/`
+- `addons/`
+- `lovelace/`
+- `node-red/`
+- top-level `esphome/`
 
-### Meaningful missing layer: Supervisor/App metadata
+Repository-only documentation under `docs/` and the root README were preserved.
 
-11 old-export files are not represented by dev.6:
+The previous exporter flow was disabled, and the legacy `5daec847_git-exporter` no longer appears in Supervisor inventory.
 
-```text
-addons/45df7312_zigbee2mqtt_edge.yaml
-addons/5daec847_git-exporter.yaml
-addons/8a8d906b_codex_cli_worker.yaml
-addons/a0d7b954_glances.yaml
-addons/a0d7b954_nodered.yaml
-addons/a0d7b954_ssh.yaml
-addons/a0d7b954_vscode.yaml
-addons/core_configurator.yaml
-addons/core_mosquitto.yaml
-addons/e3fcb3fb_ha_config_exporter.yaml
-addons/repositories.yaml
-```
+## Final status
 
-These came from Supervisor/API-derived data in the old exporter and are not supplied by `all_addon_configs`.
+**Project complete. No release blockers remain.**
 
-Decision: restore this information in the new architecture under `derived/apps/...`, with explicit sanitization. Do not recreate the misleading old top-level `addons/` model.
-
-### Old-only files intentionally not restored
-
-31 files are low-value binary/static assets:
-
-- custom-component branding PNG files
-- HACS Roboto WOFF2 fonts
-- LibreSpeed binary
-- two `www/sounds/*.mp3` files
-
-They have no meaningful ChatGPT audit value.
-
-13 old-only files are duplicate representations already present in dev.6 at their truthful source path:
-
-- Lovelace YAML exports -> `homeassistant/.storage/lovelace*`
-- Node-RED `flows.json` / `settings.js` -> `addon_configs/a0d7b954_nodered/`
-- ESPHome `.gitignore` -> `homeassistant/esphome/.gitignore`
-
-2 old-only files are repository-only historical documentation:
-
-- `docs/node-red-modernization/README.md`
-- `docs/node-red-modernization/TRACKING_LOG.md`
-
-These are not part of source capture and will be preserved when the new exporter eventually targets the production repository.
-
-### Add-on configuration parity
-
-There are no old add-on configuration files missing from dev.6.
-
-The dev.6 mirror actually captures a broader truthful `addon_configs/a0d7b954_nodered/` set than the old exporter.
-
-## Confirmed runtime-noise finding
-
-`addon_configs/a0d7b954_nodered/context/global/global.json` is live runtime state, not configuration.
-
-Between two recent snapshots it changed values such as:
-
-- `lastKnown.temperature.*.state`
-- `lastKnown.temperature.*.value`
-- `lastKnown.temperature.*.last_live_at`
-
-Decision: exclude at least:
-
-```text
-a0d7b954_nodered/context/**
-```
-
-from the built-in `addon_configs` base policy before stable.
-
-After this change, run two exports without intentional configuration changes; the second must produce:
-
-```text
-No changes detected — nothing pushed.
-```
-
-## Existing Node-RED automation still points to old exporter
-
-Current mirrored Node-RED flow `Github automate export pro ChatGPT` still targets the legacy App:
-
-```text
-hassio.app_start
-app: 5daec847_git-exporter
-```
-
-and checks:
-
-```text
-binary_sensor.home_assistant_git_exporter_node_red_fix_bezi
-```
-
-Current triggers include:
-
-- every 20 minutes
-- HA restart path
-- successful backup
-- Codex done
-- Node-RED deploy/start path
-
-The new native exporter is visible in Supervisor metadata as `e3fcb3fb_ha_config_exporter`.
-
-Decision: do not modify Node-RED until the exporter itself is ready. Then replace the old App start/status references with the new exporter.
-
-## Stable 0.1.0 blockers
-
-Only real release/cutover work remains:
-
-1. Add sanitized Supervisor/App repository metadata under `derived/apps/`.
-2. Exclude Node-RED runtime context noise and prove a clean no-change run.
-3. Repoint the existing Node-RED export automation from the legacy exporter to the new exporter.
-4. Remove the hard-coded test mirror URL from the public App's stable default configuration; stable defaults must not point at the developer's private test repository.
-5. Perform production cutover:
-   - ensure only one writer;
-   - point the new exporter at `freezejcavi/home-assistant-config`;
-   - provision its production write Deploy Key;
-   - run one production smoke export;
-   - verify parentless snapshot, sanitization, repository-only preservation and expected delta;
-   - only then retire the old exporter workflow.
-
-No new feature work should be added before stable unless it is required by one of these blockers.
-
-## Explicit non-goals before stable
-
-Do not:
-
-- optimize `custom_components` size just because it is large;
-- add backup/restore logic;
-- add Git -> HA deployment;
-- add another updater;
-- reintroduce duplicate Lovelace/Node-RED export structures;
-- broaden `.storage` without a concrete audit need;
-- change snapshot-only/root-commit behavior.
+Future work should be evidence-driven maintenance only.
