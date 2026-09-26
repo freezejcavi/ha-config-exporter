@@ -1,5 +1,12 @@
 # Changelog
 
+## 0.1.0-dev.8
+
+- Hotfix Supervisor API environment loading under s6-overlay.
+- Start the exporter through `/command/with-contenv` so `SUPERVISOR_TOKEN` reaches the Python process.
+- No mirror contract, metadata, filtering, or security-policy changes from dev.7.
+
+
 ## 0.1.0-dev.7
 
 - Export all currently installed Home Assistant Apps dynamically under `derived/apps/`.
