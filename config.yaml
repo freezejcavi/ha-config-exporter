@@ -1,0 +1,39 @@
+name: HA Config Exporter
+version: 0.1.0-dev.1
+slug: ha_config_exporter
+description: One-way Home Assistant configuration mirror for ChatGPT audit and guidance
+url: https://github.com/freezejcavi/ha-config-exporter
+arch:
+  - aarch64
+startup: once
+boot: manual
+init: false
+map:
+  - type: homeassistant_config
+    read_only: true
+  - type: all_addon_configs
+    read_only: true
+options:
+  repository:
+    url: git@github.com:freezejcavi/home-assistant-config-v2-test.git
+    branch_name: main
+    commit_message: Home Assistant Config Snapshot
+  include: []
+  exclude:
+    - /homeassistant/*.db
+    - /homeassistant/*.db-*
+    - /homeassistant/*.log*
+    - /homeassistant/**/__pycache__/**
+    - /homeassistant/.cache/**
+    - /addon_configs/**/__pycache__/**
+  dry_run: false
+schema:
+  repository:
+    url: str
+    branch_name: str
+    commit_message: str
+  include:
+    - str
+  exclude:
+    - str
+  dry_run: bool
