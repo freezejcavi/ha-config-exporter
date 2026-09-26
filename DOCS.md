@@ -170,3 +170,18 @@ The normal user-facing log is intentionally concise. It shows:
 Low-value internal Git details such as full tree SHA, remote SHA and the raw result JSON are deliberately not printed during a normal run.
 
 Home Assistant/S6 container lifecycle messages are generated outside the exporter and therefore do not use this formatter.
+
+
+## Private automatic updater
+
+This repository also contains the local helper App `HA Config Exporter Updater` under `updater/`.
+
+The updater is deliberately separate from the exporter so the exporter does not need write access to `/addons` or Supervisor manager privileges.
+
+The helper uses a dedicated **read-only** Deploy Key for this source repository, fast-forwards the local source checkout, reloads the App store, and asks Supervisor to update the exporter only when its version changed.
+
+The intended runtime sequence is:
+
+`Updater -> wait until stopped -> Exporter`
+
+See `updater/DOCS.md` for bootstrap and security details.
