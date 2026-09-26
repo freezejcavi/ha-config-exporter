@@ -35,4 +35,4 @@ jobs:
 
       - name: Container build smoke
         run: |
-          docker build             --build-arg BUILD_VERSION=0.1.0-dev.1             --build-arg BUILD_ARCH=amd64             -t ha-config-exporter:ci .
+          docker build             --build-arg BUILD_VERSION=0.1.0-dev.2             --build-arg BUILD_ARCH=amd64             -t ha-config-exporter:ci .
