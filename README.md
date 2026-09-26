@@ -23,13 +23,15 @@ Then install **HA Config Exporter** from the repository.
 
 Future App versions are delivered through the normal Home Assistant update mechanism.
 
-## Development target
+## Mirror target
 
-The current development target remains isolated:
+The App does not ship with a repository target.
 
-`git@github.com:freezejcavi/home-assistant-config-v2-test.git`
+Set `repository.url` in the App Configuration to the GitHub SSH repository that should receive the analytical snapshot, for example:
 
-The production `home-assistant-config` repository is not touched until cutover is explicitly approved.
+`git@github.com:owner/repository.git`
+
+Existing installations keep their saved App options across updates, so review the effective target before the first stable run.
 
 ## Authentication to the private mirror
 
@@ -48,4 +50,4 @@ Selected `.storage` audit data is enabled by default. Built-in ordinary filterin
 
 ## Current phase
 
-**0.1.0-dev.9** — lean analytical mirror with third-party component provenance and restored Codex task records.
+**0.1.0** — stable analytical mirror release.

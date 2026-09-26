@@ -15,6 +15,27 @@ class ConfigTests(unittest.TestCase):
             path.write_text(json.dumps(payload), encoding="utf-8")
             return load_config(path)
 
+
+    def test_repository_url_is_required(self) -> None:
+        with self.assertRaisesRegex(ValueError, "repository.url is required"):
+            self._load(
+                {
+                    "repository": {
+                        "url": "",
+                    }
+                }
+            )
+
+    def test_repository_url_requires_github_ssh(self) -> None:
+        with self.assertRaisesRegex(ValueError, "must use GitHub SSH"):
+            self._load(
+                {
+                    "repository": {
+                        "url": "https://github.com/test/repo.git",
+                    }
+                }
+            )
+
     def test_scoped_filters_are_relative(self) -> None:
         config = self._load(
             {

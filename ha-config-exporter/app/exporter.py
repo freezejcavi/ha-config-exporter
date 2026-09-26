@@ -10,7 +10,7 @@ from gitmirror import (
 from logutil import changes, error, footer, header, info, ok
 from selector import build_mirror
 
-VERSION = "0.1.0-dev.9"
+VERSION = "0.1.0"
 
 
 def main() -> int:
