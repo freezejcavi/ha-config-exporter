@@ -47,6 +47,7 @@ class GitMirrorTests(unittest.TestCase):
             )
             self.assertFalse(result["changed"])
             self.assertFalse(result["pushed"])
+            self.assertEqual(result["changed_files"], [])
 
     def test_changed_tree_creates_parentless_candidate(self) -> None:
         with tempfile.TemporaryDirectory() as tmp:
@@ -66,6 +67,10 @@ class GitMirrorTests(unittest.TestCase):
             )
 
             self.assertTrue(result["changed"])
+            self.assertEqual(
+                result["changed_files"],
+                ["A\thomeassistant/configuration.yaml"],
+            )
             snapshot = str(result["snapshot_sha"])
             content = self._git(repo, "cat-file", "-p", snapshot)
             self.assertFalse(any(line.startswith("parent ") for line in content.splitlines()))
