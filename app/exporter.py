@@ -82,7 +82,7 @@ def main() -> int:
             success=False,
         )
         return 2
-    except Exception as err:
+    except Exception as err:  # noqa: BLE001 - top-level App boundary logs cleanly
         error(f"Unexpected {type(err).__name__}: {err}")
         footer(
             f"HA Config Exporter {VERSION} — RUN END: ERROR",
