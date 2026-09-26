@@ -25,6 +25,15 @@ STORAGE_DEFAULT_ALLOW = (
     "/homeassistant/.storage/zone",
 )
 
+DEFAULT_EXCLUDE_PATTERNS = (
+    "/homeassistant/codex_input/**",
+    "/homeassistant/**/__pycache__/**",
+    "/homeassistant/**/node_modules/**",
+    "/addon_configs/**/__pycache__/**",
+    "/addon_configs/**/node_modules/**",
+    "/addon_configs/**/*.backup",
+)
+
 HARD_DENY_PATTERNS = (
     "*/.git",
     "*/.git/**",
@@ -38,6 +47,12 @@ HARD_DENY_PATTERNS = (
     "*/.storage/core.config_entries",
     "*/.storage/application_credentials",
     "*/.storage/cloud",
+    "/homeassistant/.cloud",
+    "/homeassistant/.cloud/**",
+    "*/flows_cred*",
+    "*/.config.users.json*",
+    "*/credentials.json",
+    "*/credentials.*",
     "*/*.pem",
     "*/*.key",
     "*/id_rsa*",
@@ -125,7 +140,10 @@ def should_copy(
     if not storage_default_allowed(absolute_source) and not explicitly_included:
         return False
 
-    if matches(absolute_source, exclude) and not (explicitly_included or include_override):
+    ordinary_excluded = matches(absolute_source, DEFAULT_EXCLUDE_PATTERNS) or matches(
+        absolute_source, exclude
+    )
+    if ordinary_excluded and not (explicitly_included or include_override):
         return False
 
     return not (source.is_file() and is_probably_binary(source))
@@ -235,6 +253,49 @@ def copy_explicit_includes(
     return files, symlinks
 
 
+def sanitize_zigbee2mqtt_configuration(destination_repository: Path) -> None:
+    path = destination_repository / "homeassistant" / "zigbee2mqtt" / "configuration.yaml"
+    if not path.exists():
+        return
+
+    lines = path.read_text(encoding="utf-8", errors="replace").splitlines()
+    result: list[str] = []
+    section: str | None = None
+    skip_block_indent: int | None = None
+
+    for line in lines:
+        stripped = line.lstrip()
+        indent = len(line) - len(stripped)
+
+        if skip_block_indent is not None:
+            if stripped and indent > skip_block_indent:
+                continue
+            skip_block_indent = None
+
+        if indent == 0 and stripped.endswith(":") and not stripped.startswith(("#", "-")):
+            section = stripped[:-1].strip()
+
+        key_match = re.match(r"^(\s*)([A-Za-z0-9_.-]+)\s*:\s*(.*)$", line)
+        if not key_match:
+            result.append(line)
+            continue
+
+        prefix, key, _value = key_match.groups()
+
+        if section == "mqtt" and key == "password":
+            result.append(f'{prefix}password: "<redacted>"')
+            continue
+
+        if section == "advanced" and key == "network_key":
+            result.append(f'{prefix}network_key: "<redacted>"')
+            skip_block_indent = len(prefix)
+            continue
+
+        result.append(line)
+
+    path.write_text("\n".join(result) + "\n", encoding="utf-8")
+
+
 def write_sanitized_secrets(destination_repository: Path) -> None:
     source = Path("/homeassistant/secrets.yaml")
     destination = destination_repository / "homeassistant" / "secrets.yaml"
@@ -290,6 +351,9 @@ def _json_sensitive_values(value: object, prefix: str = "") -> list[str]:
 def _should_scan_config_file(path: Path, repository_root: Path) -> bool:
     relative = path.relative_to(repository_root).as_posix()
     suffix = path.suffix.lower()
+
+    if relative.startswith("addon_configs/") and path.name == "flows.json":
+        return False
 
     if relative.startswith("addon_configs/"):
         return suffix in TEXT_CONFIG_SUFFIXES
@@ -393,10 +457,15 @@ def build_mirror(
         stats["symlinks"] += copied_links
 
     write_sanitized_secrets(repository_root)
+    sanitize_zigbee2mqtt_configuration(repository_root)
 
     included_files, included_links = copy_explicit_includes(repository_root, include)
     stats["files"] += included_files
     stats["symlinks"] += included_links
+
+    # Re-apply sanitizers after explicit includes, which may overwrite copied files.
+    write_sanitized_secrets(repository_root)
+    sanitize_zigbee2mqtt_configuration(repository_root)
 
     scan_for_secrets(repository_root)
     return stats
