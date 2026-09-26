@@ -57,3 +57,27 @@ def footer(title: str, *, success: bool) -> None:
     print(f"{color}{RUN_LINE}{RESET}", flush=True)
     print(f"{color}### {timestamp()} | {title}{RESET}", flush=True)
     print(f"{color}{RUN_LINE}{RESET}", flush=True)
+
+
+def changes(entries: list[str], *, limit: int = 30) -> None:
+    count = len(entries)
+    noun = "file" if count == 1 else "files"
+    _emit("CHANGE", f"{count} {noun}", MAGENTA)
+
+    status_colors = {
+        "A": GREEN,
+        "M": YELLOW,
+        "D": RED,
+    }
+
+    for entry in entries[:limit]:
+        status, _, path = entry.partition("\t")
+        color = status_colors.get(status[:1], CYAN)
+        print(f"{color}                 {status:<2} {path}{RESET}", flush=True)
+
+    hidden = count - limit
+    if hidden > 0:
+        print(
+            f"{DIM}                 ... + {hidden} more files{RESET}",
+            flush=True,
+        )
