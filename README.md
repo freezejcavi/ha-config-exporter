@@ -48,4 +48,4 @@ Selected `.storage` audit data is enabled by default. Built-in ordinary filterin
 
 ## Current phase
 
-**0.1.0-dev.5** — native Home Assistant App repository packaging plus continued isolated A/B validation.
+**0.1.0-dev.6** — distribution-only update discovery validation on the native Home Assistant App repository.
