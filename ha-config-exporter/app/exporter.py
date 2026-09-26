@@ -75,7 +75,7 @@ def main() -> int:
         )
         return 0
 
-    except (PermissionError, RuntimeError, ValueError) as err:
+    except (PermissionError, RuntimeError, TypeError, ValueError) as err:
         error(err)
         footer(
             f"HA Config Exporter {VERSION} — RUN END: ERROR",
