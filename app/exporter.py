@@ -2,10 +2,14 @@ from __future__ import annotations
 
 import json
 import sys
-from pathlib import Path
 
 from config import load_config
-from gitmirror import ensure_ssh_material, prepare_repository, public_key, publish_snapshot
+from gitmirror import (
+    ensure_ssh_material,
+    prepare_repository,
+    public_key,
+    publish_snapshot,
+)
 from selector import build_mirror
 
 
