@@ -2,6 +2,7 @@ from __future__ import annotations
 
 import json
 import sys
+from datetime import UTC, datetime
 
 from config import load_config
 from gitmirror import (
@@ -13,27 +14,43 @@ from gitmirror import (
 from selector import build_mirror
 
 
+VERSION = "0.1.0-dev.2"
+
+
+def timestamp() -> str:
+    return datetime.now(UTC).isoformat(timespec="seconds").replace("+00:00", "Z")
+
+
+def log(message: str, *, error: bool = False) -> None:
+    stream = sys.stderr if error else sys.stdout
+    print(f"[{timestamp()}] {message}", file=stream, flush=True)
+
+
 def main() -> int:
-    print("HA Config Exporter 0.1.0-dev.1")
-    print("Purpose: one-way Home Assistant configuration mirror for ChatGPT audit/guidance")
+    log("=" * 72)
+    log(f"HA Config Exporter {VERSION} — RUN START")
+    log("Purpose: one-way Home Assistant configuration mirror for ChatGPT audit/guidance")
 
     config = load_config()
 
     key_created = ensure_ssh_material()
     if key_created:
-        print("Generated a dedicated SSH deploy key for the target mirror repository:")
-        print(public_key())
-        print(
-            "Add the public key above to the target GitHub repository as a write-enabled Deploy Key."
+        log("Generated a dedicated SSH deploy key for the target mirror repository:")
+        log(public_key())
+        log(
+            "Add the public key above to the target GitHub repository "
+            "as a write-enabled Deploy Key."
         )
 
     try:
         repository, expected_sha = prepare_repository(config.repository)
     except PermissionError as err:
-        print(str(err), file=sys.stderr)
+        log(str(err), error=True)
+        log(f"HA Config Exporter {VERSION} — RUN END: ERROR", error=True)
+        log("=" * 72, error=True)
         return 2
 
-    print(f"Remote baseline: {expected_sha}")
+    log(f"Remote baseline: {expected_sha}")
 
     stats = build_mirror(
         repository,
@@ -41,7 +58,7 @@ def main() -> int:
         include=config.include,
     )
 
-    print(
+    log(
         "Prepared managed mirror: "
         f"{stats['files']} file copies, {stats['symlinks']} symlinks"
     )
@@ -53,17 +70,23 @@ def main() -> int:
         dry_run=config.dry_run,
     )
 
-    print(json.dumps(result, indent=2, sort_keys=True))
+    log(json.dumps(result, indent=2, sort_keys=True))
 
     if not result["changed"]:
-        print("Mirror is unchanged; no commit or push required.")
+        log("Mirror is unchanged; no commit or push required.")
+        log(f"HA Config Exporter {VERSION} — RUN END: SUCCESS / NO CHANGE")
+        log("=" * 72)
         return 0
 
     if config.dry_run:
-        print("Dry run: snapshot differs, but no push was performed.")
+        log("Dry run: snapshot differs, but no push was performed.")
+        log(f"HA Config Exporter {VERSION} — RUN END: SUCCESS / DRY RUN")
+        log("=" * 72)
         return 0
 
-    print(f"Published root snapshot: {result['snapshot_sha']}")
+    log(f"Published root snapshot: {result['snapshot_sha']}")
+    log(f"HA Config Exporter {VERSION} — RUN END: SUCCESS")
+    log("=" * 72)
     return 0
 
 
