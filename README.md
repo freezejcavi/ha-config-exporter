@@ -48,4 +48,4 @@ Selected `.storage` audit data is enabled by default. Built-in ordinary filterin
 
 ## Current phase
 
-**0.1.0-dev.7** — Supervisor/App metadata parity plus export-noise cleanup before stable 0.1.0.
+**0.1.0-dev.8** — s6 Supervisor environment hotfix for the dev.7 metadata/export cleanup.
