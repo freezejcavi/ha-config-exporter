@@ -8,6 +8,7 @@ import shutil
 from collections.abc import Iterable
 from pathlib import Path
 
+from components import write_component_index
 from config import ScopeConfig
 from logutil import warn
 from supervisor import write_app_metadata
@@ -30,6 +31,11 @@ BASE_EXCLUDE_PATTERNS = {
         "**/.DS_Store",
         "**/deps",
         "**/deps/**",
+        "**/node_modules",
+        "**/node_modules/**",
+        "**/*.backup",
+        "**/*.bak",
+        "**/*.bak_*",
         "known_devices.yaml",
         "tts",
         "tts/**",
@@ -512,5 +518,6 @@ def build_mirror(
     write_sanitized_secrets(repository_root)
     sanitize_zigbee2mqtt_configuration(repository_root)
     stats["files"] += write_app_metadata(repository_root)
+    stats["files"] += write_component_index(repository_root)
     scan_for_secrets(repository_root)
     return stats

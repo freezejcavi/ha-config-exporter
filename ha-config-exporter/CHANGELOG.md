@@ -1,5 +1,15 @@
 # Changelog
 
+## 0.1.0-dev.9
+
+- Restore `codex_tasks/*/task.json` to the analytical mirror.
+- Switch third-party custom integrations to metadata-only export.
+- Keep full source for locally developed `battery_health` and `anime_benchmark`.
+- Add `derived/custom_components/index.json` with version, upstream source, requirements and an installed-tree SHA-256 fingerprint.
+- Exclude generic `node_modules` and backup artifacts from the Home Assistant scope.
+- Keep canonical component metadata, YAML descriptors and EN/CS translations for third-party integrations.
+
+
 ## 0.1.0-dev.8
 
 - Hotfix Supervisor API environment loading under s6-overlay.

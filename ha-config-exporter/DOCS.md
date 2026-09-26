@@ -33,6 +33,12 @@ Installed Home Assistant Apps are discovered dynamically on every run and writte
 
 Newly installed Apps are therefore included automatically; the exporter does not maintain a hard-coded App list.
 
+Installed custom integrations are also indexed under:
+
+- `derived/custom_components/index.json`
+
+The component index records the integration version, upstream source when derivable from the manifest, requirements, export mode, and a SHA-256 fingerprint of the actually installed component tree. This allows third-party source code to remain reproducible from upstream without copying the full implementation into every mirror snapshot.
+
 ## Filtering model
 
 Filtering is deliberately split into three layers.
@@ -47,6 +53,8 @@ For `/homeassistant`, the built-in base policy excludes:
 - `*.log*`, `*.gz`
 - `**/__pycache__/**`, `**/._*`, `**/.DS_Store`
 - `**/deps/**`
+- `**/node_modules/**`
+- `**/*.backup`, `**/*.bak`, `**/*.bak_*`
 - `known_devices.yaml`, `tts/**`, `.cache/**`, `.ha_run.lock`
 - `zigbee2mqtt/coordinator_backup.json`, `zigbee2mqtt/state.json`, `zigbee2mqtt/device_icons/**`
 - `ml_weather/data/**`, `ml_weather/output/**`, `ml_weather/models/**`
@@ -68,9 +76,12 @@ For `/addon_configs`, the built-in base policy excludes:
 
 ### 2. User exclude
 
-The packaged project defaults intentionally apply a small audit-focused user policy:
+The packaged project defaults intentionally apply an audit-focused user policy:
 
-- Home Assistant excludes `custom_components/hacs/hacs_frontend/**` and `codex_tasks/**`.
+- the full `custom_components/**` tree is excluded by default;
+- full source is restored for the locally developed `battery_health/**` and `anime_benchmark/**` integrations;
+- third-party integrations retain their `manifest.json`, `strings.json`, `icons.json`, YAML descriptors, README/typing metadata, and EN/CS translations;
+- the broad built-in `codex_tasks/**` exclusion remains active, while its built-in exception restores every `codex_tasks/*/task.json` analytical record;
 - Node-RED's App config folder is excluded as a whole, then `flows.json`, `settings.js`, `package.json` and `package-lock.json` are explicitly included.
 
 Existing installations can keep their previous saved options after an App update, so the effective live options should be checked after upgrading.
@@ -158,6 +169,8 @@ For each file:
 6. final pre-push security scan.
 
 This gives the intended `exclude folder -> include selected file` behavior without making include an allow-list.
+
+For third-party custom integrations, the mirror therefore acts as a precise analytical index rather than a source archive. The exact installed implementation can be compared against upstream using the recorded version/source metadata and installed-tree fingerprint.
 
 ## Authentication
 
