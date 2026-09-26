@@ -1,8 +1,8 @@
 from __future__ import annotations
 
+from datetime import UTC, datetime
 import json
 import sys
-from datetime import UTC, datetime
 
 from config import load_config
 from gitmirror import (
