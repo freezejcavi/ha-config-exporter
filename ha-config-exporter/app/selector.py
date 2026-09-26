@@ -10,6 +10,7 @@ from pathlib import Path
 
 from config import ScopeConfig
 from logutil import warn
+from supervisor import write_app_metadata
 
 SOURCE_ROOTS = (
     Path("/homeassistant"),
@@ -64,6 +65,13 @@ BASE_EXCLUDE_PATTERNS = {
         "**/node_modules",
         "**/node_modules/**",
         "**/*.backup",
+        "**/*.bak",
+        "**/*.bak_*",
+        "*_nodered/context",
+        "*_nodered/context/**",
+        "*_nodered/.config.runtime.json",
+        "*_nodered/.config.nodes.json",
+        "*_nodered/node-red-contrib-home-assistant-websocket.json",
     ),
 }
 
@@ -503,5 +511,6 @@ def build_mirror(
 
     write_sanitized_secrets(repository_root)
     sanitize_zigbee2mqtt_configuration(repository_root)
+    stats["files"] += write_app_metadata(repository_root)
     scan_for_secrets(repository_root)
     return stats

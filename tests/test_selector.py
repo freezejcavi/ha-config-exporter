@@ -119,6 +119,58 @@ class SelectorTests(unittest.TestCase):
             )
         )
 
+    def test_builtin_runtime_noise_excludes(self) -> None:
+        source = Path("/nonexistent/runtime.json")
+        excluded = (
+            "a0d7b954_nodered/context/global/global.json",
+            "a0d7b954_nodered/.config.runtime.json",
+            "a0d7b954_nodered/.config.nodes.json",
+            "a0d7b954_nodered/node-red-contrib-home-assistant-websocket.json",
+            "example/file.bak",
+            "example/file.bak_20260527_113655",
+        )
+        for relative in excluded:
+            with self.subTest(relative=relative):
+                self.assertFalse(
+                    should_copy(
+                        f"/addon_configs/{relative}",
+                        relative,
+                        source,
+                        scope_name="addon_configs",
+                        scope=ScopeConfig(),
+                    )
+                )
+
+    def test_node_red_folder_exclude_with_selected_includes(self) -> None:
+        source = Path("/nonexistent/node-red-file")
+        scope = ScopeConfig(
+            exclude=("a0d7b954_nodered/**",),
+            include=(
+                "a0d7b954_nodered/flows.json",
+                "a0d7b954_nodered/settings.js",
+                "a0d7b954_nodered/package.json",
+                "a0d7b954_nodered/package-lock.json",
+            ),
+        )
+        self.assertTrue(
+            should_copy(
+                "/addon_configs/a0d7b954_nodered/flows.json",
+                "a0d7b954_nodered/flows.json",
+                source,
+                scope_name="addon_configs",
+                scope=scope,
+            )
+        )
+        self.assertFalse(
+            should_copy(
+                "/addon_configs/a0d7b954_nodered/flows copy.json",
+                "a0d7b954_nodered/flows copy.json",
+                source,
+                scope_name="addon_configs",
+                scope=scope,
+            )
+        )
+
     def test_user_include_can_restore_safe_storage_file(self) -> None:
         source = Path("/nonexistent/trace.saved_traces")
         self.assertTrue(

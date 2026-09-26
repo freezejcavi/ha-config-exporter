@@ -10,7 +10,7 @@ from gitmirror import (
 from logutil import changes, error, footer, header, info, ok
 from selector import build_mirror
 
-VERSION = "0.1.0-dev.6"
+VERSION = "0.1.0-dev.7"
 
 
 def main() -> int:
@@ -75,7 +75,7 @@ def main() -> int:
         )
         return 0
 
-    except (PermissionError, RuntimeError, ValueError) as err:
+    except (PermissionError, RuntimeError, TypeError, ValueError) as err:
         error(err)
         footer(
             f"HA Config Exporter {VERSION} — RUN END: ERROR",

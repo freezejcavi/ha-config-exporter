@@ -36,7 +36,7 @@ jobs:
       - name: Exporter container build smoke
         run: |
           docker build \
-            --build-arg BUILD_VERSION=0.1.0-dev.6 \
+            --build-arg BUILD_VERSION=0.1.0-dev.7 \
             --build-arg BUILD_ARCH=amd64 \
             -t ha-config-exporter:ci \
             ha-config-exporter
