@@ -172,6 +172,12 @@ This gives the intended `exclude folder -> include selected file` behavior witho
 
 For third-party custom integrations, the mirror therefore acts as a precise analytical index rather than a source archive. The exact installed implementation can be compared against upstream using the recorded version/source metadata and installed-tree fingerprint.
 
+## Target configuration
+
+Stable packages do not contain a preconfigured mirror repository. Set `repository.url` explicitly in App Configuration using GitHub SSH syntax.
+
+Existing installations retain their saved App options across updates. Verify the effective repository target before the first stable run.
+
 ## Authentication
 
 The App uses its own persistent Ed25519 SSH Deploy Key for the target mirror repository.
