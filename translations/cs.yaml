@@ -1,0 +1,34 @@
+configuration:
+  repository:
+    name: Repository
+    description: Cílové privátní GitHub repository pro mirror.
+    fields:
+      url:
+        name: SSH URL
+      branch_name:
+        name: Branch
+      commit_message:
+        name: Zpráva snapshot commitu
+  homeassistant:
+    name: Filtry Home Assistant
+    description: Volitelné cesty relativně k /homeassistant. Vestavěná pravidla jsou popsána v Dokumentaci.
+    fields:
+      include:
+        name: Include výjimky
+        description: Vrátí vybrané soubory z exclude cesty. Nech prázdné, pokud není potřeba.
+      exclude:
+        name: Další excludes
+        description: Další cesty k vynechání nad rámec vestavěných pravidel.
+  addon_configs:
+    name: Filtry konfigurací Apps
+    description: Volitelné cesty relativně k /addon_configs.
+    fields:
+      include:
+        name: Include výjimky
+        description: Vrátí vybrané soubory z exclude cesty. Nech prázdné, pokud není potřeba.
+      exclude:
+        name: Další excludes
+        description: Další cesty k vynechání nad rámec vestavěných pravidel.
+  dry_run:
+    name: Dry run
+    description: Sestaví a porovná mirror bez pushnutí nového snapshotu.

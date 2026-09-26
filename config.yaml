@@ -1,5 +1,5 @@
 name: HA Config Exporter
-version: 0.1.0-dev.3
+version: 0.1.0-dev.4
 slug: ha_config_exporter
 description: One-way Home Assistant configuration mirror for ChatGPT audit and guidance
 url: https://github.com/freezejcavi/ha-config-exporter
@@ -18,61 +18,26 @@ options:
     url: git@github.com:freezejcavi/home-assistant-config-v2-test.git
     branch_name: main
     commit_message: Home Assistant Config Snapshot
-  include:
-    - /homeassistant/codex_tasks/*/task.json
-  exclude:
-    - /homeassistant/*.db
-    - /homeassistant/*.db-shm
-    - /homeassistant/*.db-wal
-    - /homeassistant/*.log*
-    - /homeassistant/*.gz
-    - /homeassistant/**/__pycache__
-    - /homeassistant/**/__pycache__/**
-    - /homeassistant/**/._*
-    - /homeassistant/**/.DS_Store
-    - /homeassistant/**/deps
-    - /homeassistant/**/deps/**
-    - /homeassistant/known_devices.yaml
-    - /homeassistant/tts
-    - /homeassistant/tts/**
-    - /homeassistant/zigbee2mqtt/coordinator_backup.json
-    - /homeassistant/zigbee2mqtt/state.json
-    - /homeassistant/zigbee2mqtt/device_icons
-    - /homeassistant/zigbee2mqtt/device_icons/**
-    - /homeassistant/ml_weather/data
-    - /homeassistant/ml_weather/data/**
-    - /homeassistant/ml_weather/output
-    - /homeassistant/ml_weather/output/**
-    - /homeassistant/ml_weather/models
-    - /homeassistant/ml_weather/models/**
-    - /homeassistant/.cache
-    - /homeassistant/.cache/**
-    - /homeassistant/.ha_run.lock
-    - /homeassistant/codex_input
-    - /homeassistant/codex_input/**
-    - /homeassistant/image
-    - /homeassistant/image/**
-    - /homeassistant/www/codex_cli_auth
-    - /homeassistant/www/codex_cli_auth/**
-    - /homeassistant/www/community
-    - /homeassistant/www/community/**
-    - /homeassistant/www/calendars
-    - /homeassistant/www/calendars/**
-    - /homeassistant/codex_tasks
-    - /homeassistant/codex_tasks/**
-    - /addon_configs/**/__pycache__
-    - /addon_configs/**/__pycache__/**
-    - /addon_configs/**/node_modules
-    - /addon_configs/**/node_modules/**
-    - /addon_configs/**/*.backup
+  homeassistant:
+    include: []
+    exclude: []
+  addon_configs:
+    include: []
+    exclude: []
   dry_run: false
 schema:
   repository:
     url: str
     branch_name: str
     commit_message: str
-  include:
-    - str
-  exclude:
-    - str
+  homeassistant:
+    include:
+      - str
+    exclude:
+      - str
+  addon_configs:
+    include:
+      - str
+    exclude:
+      - str
   dry_run: bool

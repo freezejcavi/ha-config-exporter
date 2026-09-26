@@ -1,0 +1,34 @@
+configuration:
+  repository:
+    name: Repository
+    description: Target private GitHub mirror repository.
+    fields:
+      url:
+        name: SSH URL
+      branch_name:
+        name: Branch
+      commit_message:
+        name: Snapshot commit message
+  homeassistant:
+    name: Home Assistant filters
+    description: Optional paths relative to /homeassistant. Built-in noise/security rules are documented separately.
+    fields:
+      include:
+        name: Include exceptions
+        description: Restore selected files from an excluded path. Leave empty unless needed.
+      exclude:
+        name: Additional excludes
+        description: Extra paths to omit beyond the built-in policy.
+  addon_configs:
+    name: App configuration filters
+    description: Optional paths relative to /addon_configs.
+    fields:
+      include:
+        name: Include exceptions
+        description: Restore selected files from an excluded path. Leave empty unless needed.
+      exclude:
+        name: Additional excludes
+        description: Extra paths to omit beyond the built-in policy.
+  dry_run:
+    name: Dry run
+    description: Build and compare the mirror without pushing a new snapshot.

@@ -8,12 +8,71 @@ import shutil
 from collections.abc import Iterable
 from pathlib import Path
 
+from config import ScopeConfig
 from logutil import warn
 
 SOURCE_ROOTS = (
     Path("/homeassistant"),
     Path("/addon_configs"),
 )
+
+BASE_EXCLUDE_PATTERNS = {
+    "homeassistant": (
+        "*.db",
+        "*.db-shm",
+        "*.db-wal",
+        "*.log*",
+        "*.gz",
+        "**/__pycache__",
+        "**/__pycache__/**",
+        "**/._*",
+        "**/.DS_Store",
+        "**/deps",
+        "**/deps/**",
+        "known_devices.yaml",
+        "tts",
+        "tts/**",
+        "zigbee2mqtt/coordinator_backup.json",
+        "zigbee2mqtt/state.json",
+        "zigbee2mqtt/device_icons",
+        "zigbee2mqtt/device_icons/**",
+        "ml_weather/data",
+        "ml_weather/data/**",
+        "ml_weather/output",
+        "ml_weather/output/**",
+        "ml_weather/models",
+        "ml_weather/models/**",
+        ".cache",
+        ".cache/**",
+        ".ha_run.lock",
+        "codex_input",
+        "codex_input/**",
+        "image",
+        "image/**",
+        "www/codex_cli_auth",
+        "www/codex_cli_auth/**",
+        "www/community",
+        "www/community/**",
+        "www/calendars",
+        "www/calendars/**",
+        "codex_tasks",
+        "codex_tasks/**",
+    ),
+    "addon_configs": (
+        "**/__pycache__",
+        "**/__pycache__/**",
+        "**/node_modules",
+        "**/node_modules/**",
+        "**/*.backup",
+    ),
+}
+
+BASE_INCLUDE_PATTERNS = {
+    "homeassistant": (
+        "codex_tasks/*/task.json",
+    ),
+    "addon_configs": (),
+}
 
 MANAGED_DESTINATIONS = (
     "homeassistant",
@@ -98,6 +157,27 @@ def matches(path: str, patterns: Iterable[str]) -> bool:
     return False
 
 
+def normalize_relative_pattern(pattern: str) -> str:
+    return pattern.strip().replace("\\", "/").lstrip("/")
+
+
+def matches_relative(path: str, patterns: Iterable[str]) -> bool:
+    normalized = path.replace("\\", "/").lstrip("/")
+    for raw in patterns:
+        pattern = normalize_relative_pattern(raw)
+        if not pattern:
+            continue
+        if pattern == "**":
+            return True
+        if pattern.endswith("/") and (
+            normalized == pattern[:-1] or normalized.startswith(pattern)
+        ):
+            return True
+        if fnmatch.fnmatchcase(normalized, pattern):
+            return True
+    return False
+
+
 def is_hard_denied(path: str) -> bool:
     normalized = path.replace("\\", "/")
     return matches(normalized, HARD_DENY_PATTERNS)
@@ -120,25 +200,36 @@ def is_probably_binary(path: Path) -> bool:
 
 def should_copy(
     absolute_source: str,
+    relative_source: str,
     source: Path,
-    exclude: Iterable[str],
-    include: Iterable[str],
     *,
-    include_override: bool = False,
+    scope_name: str,
+    scope: ScopeConfig,
 ) -> bool:
     if is_hard_denied(absolute_source):
         return False
 
-    explicitly_included = matches(absolute_source, include)
-    if not storage_default_allowed(absolute_source) and not explicitly_included:
-        return False
+    base_excluded = (
+        not storage_default_allowed(absolute_source)
+        or matches_relative(relative_source, BASE_EXCLUDE_PATTERNS[scope_name])
+    )
+    base_included = matches_relative(
+        relative_source,
+        BASE_INCLUDE_PATTERNS[scope_name],
+    )
+    allowed = not base_excluded or base_included
 
-    if matches(absolute_source, exclude) and not (
-        explicitly_included or include_override
-    ):
+    if matches_relative(relative_source, scope.exclude):
+        allowed = False
+
+    if matches_relative(relative_source, scope.include):
+        allowed = True
+
+    if not allowed:
         return False
 
     return not (source.is_file() and is_probably_binary(source))
+
 
 
 def _copy_symlink(source: Path, destination: Path) -> None:
@@ -152,24 +243,31 @@ def copy_root(
     source_root: Path,
     destination_root: Path,
     *,
-    exclude: Iterable[str],
-    include: Iterable[str],
+    scope: ScopeConfig,
 ) -> tuple[int, int]:
     files = 0
     symlinks = 0
+    scope_name = source_root.name
 
     def walk(source_dir: Path, destination_dir: Path) -> None:
         nonlocal files, symlinks
         for entry in os.scandir(source_dir):
             source = Path(entry.path)
             absolute = source_path(source)
+            relative = source.relative_to(source_root).as_posix()
             destination = destination_dir / entry.name
 
             if is_hard_denied(absolute):
                 continue
 
             if entry.is_symlink():
-                if should_copy(absolute, source, exclude, include):
+                if should_copy(
+                    absolute,
+                    relative,
+                    source,
+                    scope_name=scope_name,
+                    scope=scope,
+                ):
                     _copy_symlink(source, destination)
                     symlinks += 1
                 continue
@@ -181,67 +279,18 @@ def copy_root(
             if not entry.is_file(follow_symlinks=False):
                 continue
 
-            if should_copy(absolute, source, exclude, include):
+            if should_copy(
+                absolute,
+                relative,
+                source,
+                scope_name=scope_name,
+                scope=scope,
+            ):
                 destination.parent.mkdir(parents=True, exist_ok=True)
                 shutil.copy2(source, destination)
                 files += 1
 
     walk(source_root, destination_root)
-    return files, symlinks
-
-
-def copy_explicit_includes(
-    destination_repository: Path,
-    patterns: Iterable[str],
-) -> tuple[int, int]:
-    files = 0
-    symlinks = 0
-
-    for raw_pattern in patterns:
-        pattern = normalize_pattern(raw_pattern)
-        if not (
-            pattern in {"/homeassistant", "/addon_configs"}
-            or pattern.startswith(("/homeassistant/", "/addon_configs/"))
-        ):
-            warn(f"Include outside approved roots skipped: {pattern}")
-            continue
-
-        root = "/homeassistant" if pattern.startswith("/homeassistant") else "/addon_configs"
-        root_path = Path(root)
-        relative_pattern = pattern[len(root) :].lstrip("/")
-        candidates = list(root_path.glob(relative_pattern)) if relative_pattern else [root_path]
-
-        if not candidates:
-            warn(f"Include matched nothing: {pattern}")
-            continue
-
-        for source in candidates:
-            absolute = source_path(source)
-            if is_hard_denied(absolute):
-                warn(f"Hard-denied include skipped: {absolute}")
-                continue
-
-            destination_root = destination_repository / root_path.name
-            relative = source.relative_to(root_path)
-            destination = destination_root / relative
-
-            if source.is_symlink():
-                _copy_symlink(source, destination)
-                symlinks += 1
-            elif source.is_dir():
-                copied_files, copied_links = copy_root(
-                    source,
-                    destination,
-                    exclude=(),
-                    include=(pattern,),
-                )
-                files += copied_files
-                symlinks += copied_links
-            elif source.is_file() and not is_probably_binary(source):
-                destination.parent.mkdir(parents=True, exist_ok=True)
-                shutil.copy2(source, destination)
-                files += 1
-
     return files, symlinks
 
 
@@ -426,38 +475,33 @@ def remove_managed_roots(repository_root: Path) -> None:
 def build_mirror(
     repository_root: Path,
     *,
-    exclude: Iterable[str],
-    include: Iterable[str],
+    homeassistant: ScopeConfig,
+    addon_configs: ScopeConfig,
 ) -> dict[str, int]:
     remove_managed_roots(repository_root)
 
     stats = {"files": 0, "symlinks": 0}
+    scopes = {
+        "homeassistant": homeassistant,
+        "addon_configs": addon_configs,
+    }
 
     for source_root in SOURCE_ROOTS:
         if not source_root.exists():
             warn(f"Source root unavailable: {source_root}")
             continue
+
         destination_root = repository_root / source_root.name
         destination_root.mkdir(parents=True, exist_ok=True)
         copied_files, copied_links = copy_root(
             source_root,
             destination_root,
-            exclude=exclude,
-            include=include,
+            scope=scopes[source_root.name],
         )
         stats["files"] += copied_files
         stats["symlinks"] += copied_links
 
     write_sanitized_secrets(repository_root)
     sanitize_zigbee2mqtt_configuration(repository_root)
-
-    included_files, included_links = copy_explicit_includes(repository_root, include)
-    stats["files"] += included_files
-    stats["symlinks"] += included_links
-
-    # Re-apply sanitizers after explicit includes, which may overwrite copied files.
-    write_sanitized_secrets(repository_root)
-    sanitize_zigbee2mqtt_configuration(repository_root)
-
     scan_for_secrets(repository_root)
     return stats
