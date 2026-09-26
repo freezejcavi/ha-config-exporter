@@ -1,5 +1,13 @@
 # Changelog
 
+## 0.1.0
+
+- Promote the accepted dev.9 analytical mirror contract to stable.
+- Remove the development test repository from packaged defaults.
+- Require an explicit GitHub SSH mirror target for fresh installations.
+- Preserve the validated lean custom-component provenance model, Codex task records, deterministic no-change behavior, Supervisor App metadata, and Node-RED allowlist.
+
+
 ## 0.1.0-dev.9
 
 - Restore `codex_tasks/*/task.json` to the analytical mirror.
