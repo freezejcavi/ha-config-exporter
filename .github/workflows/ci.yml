@@ -36,7 +36,7 @@ jobs:
       - name: Exporter container build smoke
         run: |
           docker build \
-            --build-arg BUILD_VERSION=0.1.0 \
+            --build-arg BUILD_VERSION=0.1.1 \
             --build-arg BUILD_ARCH=amd64 \
             -t ha-config-exporter:ci \
             ha-config-exporter
@@ -47,4 +47,4 @@ jobs:
       - name: Stable package has no development mirror default
         run: |
           ! grep -F "home-assistant-config-v2-test" ha-config-exporter/config.yaml
-          grep -F 'version: 0.1.0' ha-config-exporter/config.yaml
+          grep -F 'version: 0.1.1' ha-config-exporter/config.yaml

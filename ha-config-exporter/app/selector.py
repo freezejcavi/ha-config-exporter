@@ -94,6 +94,16 @@ MANAGED_DESTINATIONS = (
     "derived",
 )
 
+LEGACY_MIRROR_DESTINATIONS = (
+    "config",
+    "addons",
+    "lovelace",
+    "node-red",
+    "esphome",
+)
+
+LEGACY_MIRROR_SIGNATURE = Path("config/configuration.yaml")
+
 STORAGE_DEFAULT_ALLOW = (
     "/homeassistant/.storage/core.*registry",
     "/homeassistant/.storage/lovelace*",
@@ -477,13 +487,26 @@ def scan_for_secrets(repository_root: Path) -> None:
         )
 
 
+def _remove_repository_path(target: Path) -> None:
+    if target.is_symlink() or target.is_file():
+        target.unlink(missing_ok=True)
+    elif target.exists():
+        shutil.rmtree(target)
+
+
 def remove_managed_roots(repository_root: Path) -> None:
     for name in MANAGED_DESTINATIONS:
-        target = repository_root / name
-        if target.is_symlink() or target.is_file():
-            target.unlink(missing_ok=True)
-        elif target.exists():
-            shutil.rmtree(target)
+        _remove_repository_path(repository_root / name)
+
+
+def remove_legacy_mirror_roots(repository_root: Path) -> bool:
+    if not (repository_root / LEGACY_MIRROR_SIGNATURE).is_file():
+        return False
+
+    for name in LEGACY_MIRROR_DESTINATIONS:
+        _remove_repository_path(repository_root / name)
+
+    return True
 
 
 def build_mirror(
@@ -492,6 +515,7 @@ def build_mirror(
     homeassistant: ScopeConfig,
     addon_configs: ScopeConfig,
 ) -> dict[str, int]:
+    remove_legacy_mirror_roots(repository_root)
     remove_managed_roots(repository_root)
 
     stats = {"files": 0, "symlinks": 0}

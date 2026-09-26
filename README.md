@@ -50,4 +50,4 @@ Selected `.storage` audit data is enabled by default. Built-in ordinary filterin
 
 ## Current phase
 
-**0.1.0** — stable analytical mirror release.
+**0.1.1** — stable analytical mirror with guarded legacy-layout cutover cleanup.

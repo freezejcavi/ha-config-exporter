@@ -10,6 +10,7 @@ from selector import (
     is_hard_denied,
     matches,
     matches_relative,
+    remove_legacy_mirror_roots,
     sanitize_zigbee2mqtt_configuration,
     scan_for_secrets,
     should_copy,
@@ -259,6 +260,42 @@ class SelectorTests(unittest.TestCase):
                 scope=ScopeConfig(include=(".storage/core.config_entries",)),
             )
         )
+
+    def test_legacy_mirror_cleanup_requires_signature(self) -> None:
+        with tempfile.TemporaryDirectory() as tmp:
+            root = Path(tmp)
+            (root / "config").mkdir()
+            (root / "config" / "other.yaml").write_text("test: true\n", encoding="utf-8")
+            (root / "node-red").mkdir()
+            (root / "node-red" / "flows.json").write_text("[]\n", encoding="utf-8")
+
+            self.assertFalse(remove_legacy_mirror_roots(root))
+            self.assertTrue((root / "config").exists())
+            self.assertTrue((root / "node-red").exists())
+
+    def test_legacy_mirror_cleanup_removes_only_known_legacy_roots(self) -> None:
+        with tempfile.TemporaryDirectory() as tmp:
+            root = Path(tmp)
+            for name in ("config", "addons", "lovelace", "node-red", "esphome"):
+                target = root / name
+                target.mkdir(parents=True)
+                (target / "marker.txt").write_text("legacy\n", encoding="utf-8")
+
+            (root / "config" / "configuration.yaml").write_text(
+                "default_config:\n",
+                encoding="utf-8",
+            )
+            (root / "docs").mkdir()
+            (root / "docs" / "keep.md").write_text("keep\n", encoding="utf-8")
+            (root / "README.md").write_text("keep\n", encoding="utf-8")
+
+            self.assertTrue(remove_legacy_mirror_roots(root))
+
+            for name in ("config", "addons", "lovelace", "node-red", "esphome"):
+                self.assertFalse((root / name).exists())
+
+            self.assertTrue((root / "docs" / "keep.md").exists())
+            self.assertTrue((root / "README.md").exists())
 
     def test_security_scan_allows_secret_reference(self) -> None:
         with tempfile.TemporaryDirectory() as tmp:

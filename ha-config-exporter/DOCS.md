@@ -17,6 +17,18 @@ Each run:
 
 There is intentionally no history chain between exports.
 
+### Legacy layout migration
+
+When the target repository still contains the previous exporter layout, identified by `config/configuration.yaml`, the exporter removes only these obsolete mirror roots before building the current snapshot:
+
+- `config/`
+- `addons/`
+- `lovelace/`
+- `node-red/`
+- top-level `esphome/`
+
+Repository-only content such as `README.md` and `docs/` is preserved. The migration cleanup is inactive when the legacy signature is absent.
+
 ## Source hierarchy
 
 Direct filesystem content keeps the real Home Assistant App mount hierarchy:

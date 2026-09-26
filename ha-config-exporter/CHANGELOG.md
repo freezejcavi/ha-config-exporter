@@ -1,5 +1,14 @@
 # Changelog
 
+## 0.1.1
+
+- Clean legacy mirror roots during migration from the previous exporter layout.
+- The cleanup runs only when the old `config/configuration.yaml` signature is present.
+- Remove only known legacy roots: `config/`, `addons/`, `lovelace/`, `node-red/`, and top-level `esphome/`.
+- Preserve repository-only documentation such as `README.md` and `docs/`.
+- No changes to the accepted 0.1.0 analytical export contract.
+
+
 ## 0.1.0
 
 - Promote the accepted dev.9 analytical mirror contract to stable.
