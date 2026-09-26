@@ -24,7 +24,14 @@ Direct filesystem content keeps the real Home Assistant App mount hierarchy:
 - `/homeassistant/...` -> `homeassistant/...`
 - `/addon_configs/...` -> `addon_configs/...`
 
-Generated/API-derived data, when added later, belongs under `derived/`.
+Supervisor/API-derived data is written under `derived/`.
+
+Installed Home Assistant Apps are discovered dynamically on every run and written under:
+
+- `derived/apps/<slug>.json`
+- `derived/apps/repositories.json`
+
+Newly installed Apps are therefore included automatically; the exporter does not maintain a hard-coded App list.
 
 ## Filtering model
 
@@ -55,11 +62,18 @@ For `/addon_configs`, the built-in base policy excludes:
 
 - `**/__pycache__/**`
 - `**/node_modules/**`
-- `**/*.backup`
+- `**/*.backup`, `**/*.bak`, `**/*.bak_*`
+- Node-RED runtime state: `*_nodered/context/**`, `*_nodered/.config.runtime.json`, `*_nodered/.config.nodes.json`
+- Node-RED Home Assistant websocket runtime state: `*_nodered/node-red-contrib-home-assistant-websocket.json`
 
 ### 2. User exclude
 
-The Configuration screen starts with empty user filters.
+The packaged project defaults intentionally apply a small audit-focused user policy:
+
+- Home Assistant excludes `custom_components/hacs/hacs_frontend/**` and `codex_tasks/**`.
+- Node-RED's App config folder is excluded as a whole, then `flows.json`, `settings.js`, `package.json` and `package-lock.json` are explicitly included.
+
+Existing installations can keep their previous saved options after an App update, so the effective live options should be checked after upgrading.
 
 There are separate scopes:
 
