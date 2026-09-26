@@ -10,7 +10,7 @@ from gitmirror import (
 from logutil import changes, error, footer, header, info, ok
 from selector import build_mirror
 
-VERSION = "0.1.0-dev.3"
+VERSION = "0.1.0-dev.4"
 
 
 def main() -> int:
@@ -33,8 +33,8 @@ def main() -> int:
 
         stats = build_mirror(
             repository,
-            exclude=config.exclude,
-            include=config.include,
+            homeassistant=config.homeassistant,
+            addon_configs=config.addon_configs,
         )
         info(
             f"Mirror prepared: {stats['files']} files, "
