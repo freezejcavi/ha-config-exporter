@@ -1,6 +1,6 @@
 # HA Config Exporter
 
-Private one-way Home Assistant configuration mirror for ChatGPT audit, diagnostics and guidance.
+One-way Home Assistant configuration mirror for ChatGPT audit, diagnostics and guidance.
 
 This App is **not a backup**, **not disaster recovery**, and **not GitOps**. Home Assistant is always the source of truth.
 
@@ -170,44 +170,3 @@ The normal user-facing log is intentionally concise. It shows:
 Low-value internal Git details such as full tree SHA, remote SHA and the raw result JSON are deliberately not printed during a normal run.
 
 Home Assistant/S6 container lifecycle messages are generated outside the exporter and therefore do not use this formatter.
-
-
-## Local development update helper
-
-During private development the exporter is installed as a Local App from:
-
-`/addons/ha-config-exporter`
-
-The repository contains one small helper:
-
-`tools/ha-exporter-update`
-
-Run it from Studio Code Server with:
-
-```bash
-bash /addons/ha-config-exporter/tools/ha-exporter-update
-```
-
-It performs only the required local-development steps:
-
-1. verifies the local checkout has no manual modifications;
-2. checks `origin/main` using the existing read-only source SSH key;
-3. fast-forwards the local checkout when GitHub changed;
-4. runs `ha store reload`;
-5. if `config.yaml` changed to a new App version, runs:
-   `ha apps update local_ha_config_exporter`;
-6. otherwise exits without rebuilding the App.
-
-There is intentionally **no second updater App**, no second Deploy Key, and no additional Supervisor-manager service.
-
-For convenience, the Studio Code shell may define:
-
-```bash
-alias ha-exporter-update='bash /addons/ha-config-exporter/tools/ha-exporter-update'
-```
-
-Then future development updates are simply:
-
-```bash
-ha-exporter-update
-```
