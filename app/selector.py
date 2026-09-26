@@ -8,6 +8,8 @@ import shutil
 from collections.abc import Iterable
 from pathlib import Path
 
+from logutil import warn
+
 SOURCE_ROOTS = (
     Path("/homeassistant"),
     Path("/addon_configs"),
@@ -201,7 +203,7 @@ def copy_explicit_includes(
             pattern in {"/homeassistant", "/addon_configs"}
             or pattern.startswith(("/homeassistant/", "/addon_configs/"))
         ):
-            print(f"WARNING: include outside approved roots skipped: {pattern}")
+            warn(f"Include outside approved roots skipped: {pattern}")
             continue
 
         root = "/homeassistant" if pattern.startswith("/homeassistant") else "/addon_configs"
@@ -210,13 +212,13 @@ def copy_explicit_includes(
         candidates = list(root_path.glob(relative_pattern)) if relative_pattern else [root_path]
 
         if not candidates:
-            print(f"WARNING: include matched nothing: {pattern}")
+            warn(f"Include matched nothing: {pattern}")
             continue
 
         for source in candidates:
             absolute = source_path(source)
             if is_hard_denied(absolute):
-                print(f"WARNING: hard-denied include skipped: {absolute}")
+                warn(f"Hard-denied include skipped: {absolute}")
                 continue
 
             destination_root = destination_repository / root_path.name
@@ -433,7 +435,7 @@ def build_mirror(
 
     for source_root in SOURCE_ROOTS:
         if not source_root.exists():
-            print(f"WARNING: source root unavailable: {source_root}")
+            warn(f"Source root unavailable: {source_root}")
             continue
         destination_root = repository_root / source_root.name
         destination_root.mkdir(parents=True, exist_ok=True)
