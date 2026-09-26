@@ -116,10 +116,16 @@ The target repository Deploy Key must have write permission because the exporter
 
 Every exporter run begins and ends with a visible `########################################################################` separator.
 
-Exporter-owned messages contain:
+The normal user-facing log is intentionally concise. It shows:
 
-- local ISO timestamp;
-- colored severity: `INFO`, `WARN`, `ERROR`, `OK`;
+- timestamped, colored `INFO`, `WARN`, `ERROR`, and `OK` messages;
+- the size of the prepared mirror;
+- the **actual Git delta** as `A` (added), `M` (modified), or `D` (deleted) file paths;
+- at most 30 changed paths per run, followed by a count of remaining paths;
+- an explicit no-change result when nothing needs to be pushed;
+- a short snapshot SHA after a successful publish;
 - explicit `RUN START` and `RUN END` status.
+
+Low-value internal Git details such as full tree SHA, remote SHA and the raw result JSON are deliberately not printed during a normal run.
 
 Home Assistant/S6 container lifecycle messages are generated outside the exporter and therefore do not use this formatter.
