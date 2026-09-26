@@ -1,5 +1,15 @@
 # Changelog
 
+## 0.1.0-dev.7
+
+- Export all currently installed Home Assistant Apps dynamically under `derived/apps/`.
+- Export configured App repositories under `derived/apps/repositories.json`.
+- Add Supervisor API access required for App metadata.
+- Exclude generic backup/runtime artifacts including Node-RED runtime state.
+- Set the project defaults to omit HACS compiled frontend and historical Codex tasks.
+- Use a Node-RED folder exclude with explicit includes for flows, settings and package manifests.
+
+
 ## 0.1.0-dev.6
 
 - Distribution-only release to verify native Home Assistant update discovery.
