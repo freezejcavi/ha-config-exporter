@@ -172,16 +172,42 @@ Low-value internal Git details such as full tree SHA, remote SHA and the raw res
 Home Assistant/S6 container lifecycle messages are generated outside the exporter and therefore do not use this formatter.
 
 
-## Private automatic updater
+## Local development update helper
 
-This repository also contains the local helper App `HA Config Exporter Updater` under `updater/`.
+During private development the exporter is installed as a Local App from:
 
-The updater is deliberately separate from the exporter so the exporter does not need write access to `/addons` or Supervisor manager privileges.
+`/addons/ha-config-exporter`
 
-The helper uses a dedicated **read-only** Deploy Key for this source repository, fast-forwards the local source checkout, reloads the App store, and asks Supervisor to update the exporter only when its version changed.
+The repository contains one small helper:
 
-The intended runtime sequence is:
+`tools/ha-exporter-update`
 
-`Updater -> wait until stopped -> Exporter`
+Run it from Studio Code Server with:
 
-See `updater/DOCS.md` for bootstrap and security details.
+```bash
+bash /addons/ha-config-exporter/tools/ha-exporter-update
+```
+
+It performs only the required local-development steps:
+
+1. verifies the local checkout has no manual modifications;
+2. checks `origin/main` using the existing read-only source SSH key;
+3. fast-forwards the local checkout when GitHub changed;
+4. runs `ha store reload`;
+5. if `config.yaml` changed to a new App version, runs:
+   `ha apps update local_ha_config_exporter`;
+6. otherwise exits without rebuilding the App.
+
+There is intentionally **no second updater App**, no second Deploy Key, and no additional Supervisor-manager service.
+
+For convenience, the Studio Code shell may define:
+
+```bash
+alias ha-exporter-update='bash /addons/ha-config-exporter/tools/ha-exporter-update'
+```
+
+Then future development updates are simply:
+
+```bash
+ha-exporter-update
+```
