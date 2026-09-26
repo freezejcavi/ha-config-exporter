@@ -25,15 +25,6 @@ STORAGE_DEFAULT_ALLOW = (
     "/homeassistant/.storage/zone",
 )
 
-DEFAULT_EXCLUDE_PATTERNS = (
-    "/homeassistant/codex_input/**",
-    "/homeassistant/**/__pycache__/**",
-    "/homeassistant/**/node_modules/**",
-    "/addon_configs/**/__pycache__/**",
-    "/addon_configs/**/node_modules/**",
-    "/addon_configs/**/*.backup",
-)
-
 HARD_DENY_PATTERNS = (
     "*/.git",
     "*/.git/**",
@@ -140,10 +131,9 @@ def should_copy(
     if not storage_default_allowed(absolute_source) and not explicitly_included:
         return False
 
-    ordinary_excluded = matches(absolute_source, DEFAULT_EXCLUDE_PATTERNS) or matches(
-        absolute_source, exclude
-    )
-    if ordinary_excluded and not (explicitly_included or include_override):
+    if matches(absolute_source, exclude) and not (
+        explicitly_included or include_override
+    ):
         return False
 
     return not (source.is_file() and is_probably_binary(source))
