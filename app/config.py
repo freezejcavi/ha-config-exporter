@@ -4,7 +4,6 @@ import json
 from dataclasses import dataclass, field
 from pathlib import Path
 
-
 OPTIONS_PATH = Path("/data/options.json")
 
 
@@ -31,7 +30,7 @@ def load_config(path: Path = OPTIONS_PATH) -> ExportConfig:
     if not url:
         raise ValueError("repository.url is required")
 
-    if not (url.startswith("git@github.com:") or url.startswith("ssh://git@github.com/")):
+    if not url.startswith(("git@github.com:", "ssh://git@github.com/")):
         raise ValueError(
             "repository.url must use GitHub SSH, for example "
             "git@github.com:owner/repository.git"
