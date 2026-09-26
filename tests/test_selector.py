@@ -141,6 +141,71 @@ class SelectorTests(unittest.TestCase):
                     )
                 )
 
+    def test_homeassistant_generic_runtime_noise_excludes(self) -> None:
+        source = Path("/nonexistent/runtime")
+        excluded = (
+            "zigbee2mqtt/external_converters/node_modules",
+            "custom_components/example/node_modules/package.json",
+            "ml_weather/scripts/train.py.bak",
+            "ml_weather/scripts/train.py.bak_20260926",
+            "example/config.backup",
+        )
+        for relative in excluded:
+            with self.subTest(relative=relative):
+                self.assertFalse(
+                    should_copy(
+                        f"/homeassistant/{relative}",
+                        relative,
+                        source,
+                        scope_name="homeassistant",
+                        scope=ScopeConfig(),
+                    )
+                )
+
+    def test_metadata_only_custom_component_policy(self) -> None:
+        source = Path("/nonexistent/component-file")
+        scope = ScopeConfig(
+            exclude=("custom_components/**",),
+            include=(
+                "custom_components/anime_benchmark/**",
+                "custom_components/battery_health/**",
+                "custom_components/**/manifest.json",
+                "custom_components/**/strings.json",
+                "custom_components/**/icons.json",
+                "custom_components/**/*.yaml",
+                "custom_components/**/*.yml",
+                "custom_components/**/README.md",
+                "custom_components/**/py.typed",
+                "custom_components/**/translations/en.json",
+                "custom_components/**/translations/cs.json",
+            ),
+        )
+
+        expectations = {
+            "custom_components/spook/repairs.py": False,
+            "custom_components/spook/manifest.json": True,
+            "custom_components/spook/services.yaml": True,
+            "custom_components/spook/translations/en.json": True,
+            "custom_components/spook/translations/cs.json": True,
+            "custom_components/spook/translations/de.json": False,
+            "custom_components/hacs/hacs_frontend/app.js": False,
+            "custom_components/battery_health/sensor.py": True,
+            "custom_components/anime_benchmark/static/card.js": True,
+        }
+
+        for relative, expected in expectations.items():
+            with self.subTest(relative=relative):
+                self.assertEqual(
+                    should_copy(
+                        f"/homeassistant/{relative}",
+                        relative,
+                        source,
+                        scope_name="homeassistant",
+                        scope=scope,
+                    ),
+                    expected,
+                )
+
     def test_node_red_folder_exclude_with_selected_includes(self) -> None:
         source = Path("/nonexistent/node-red-file")
         scope = ScopeConfig(
