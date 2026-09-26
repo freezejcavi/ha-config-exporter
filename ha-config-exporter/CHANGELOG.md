@@ -1,5 +1,10 @@
 # Changelog
 
+## 0.1.0-dev.6
+
+- Distribution-only release to verify native Home Assistant update discovery.
+- No exporter behavior or mirror contract changes.
+
 ## 0.1.0-dev.5
 
 - Package the exporter as a standard Home Assistant custom App repository.
