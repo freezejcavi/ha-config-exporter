@@ -204,18 +204,6 @@ def publish_snapshot(
 
     normalized_history = candidate_tree == remote_tree and parents > 0
 
-    commit = run(
-        "git",
-        "commit-tree",
-        candidate_tree,
-        cwd=repository,
-        env=git_env(),
-        capture=True,
-    )
-    if commit.returncode != 0:
-        raise RuntimeError(commit.stderr.strip())
-
-    # commit-tree reads the message from stdin. Re-run explicitly with input.
     created = subprocess.run(
         ["git", "commit-tree", candidate_tree],
         cwd=repository,
