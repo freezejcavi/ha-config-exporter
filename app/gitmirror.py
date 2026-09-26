@@ -9,7 +9,6 @@ from pathlib import Path
 
 from config import RepositoryConfig
 
-
 DATA_DIR = Path("/data")
 SSH_DIR = DATA_DIR / "ssh"
 KEY_PATH = SSH_DIR / "id_ed25519"
