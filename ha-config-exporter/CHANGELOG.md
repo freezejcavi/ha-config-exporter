@@ -1,5 +1,11 @@
 # Changelog
 
+## 0.1.2
+
+- Replace deprecated Supervisor mapping `all_addon_configs` with `all_app_configs`.
+- Explicitly retain the read-only `/addon_configs` container mount and existing mirror roots, filters, and saved options.
+- No Python export logic or security-policy changes.
+
 ## 0.1.1
 
 - Clean legacy mirror roots during migration from the previous exporter layout.

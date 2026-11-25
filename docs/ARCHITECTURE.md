@@ -101,6 +101,8 @@ Repository-only `README.md` and `docs/` are preserved.
 
 ## Current production state
 
-Stable release: `0.1.1`
+Latest package: `0.1.2` (Supervisor mapping compatibility; LIVE validation pending).
+
+Version 0.1.2 uses `all_app_configs` with an explicit read-only `/addon_configs` mount to preserve the existing analytical mirror contract.
 
 Accepted production mirror: **226 files, 0 symlinks**, followed by an immediate deterministic no-change run.

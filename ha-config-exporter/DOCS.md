@@ -34,7 +34,7 @@ Repository-only content such as `README.md` and `docs/` is preserved. The migrat
 Direct filesystem content keeps the real Home Assistant App mount hierarchy:
 
 - `/homeassistant/...` -> `homeassistant/...`
-- `/addon_configs/...` -> `addon_configs/...`
+- `/addon_configs/...` -> `addon_configs/...` (explicit read-only mount via `all_app_configs` since 0.1.2)
 
 Supervisor/API-derived data is written under `derived/`.
 
