@@ -44,10 +44,10 @@ On first run the App creates an Ed25519 key under persistent `/data` and prints 
 Direct filesystem data keeps the real Home Assistant App mount path:
 
 - `/homeassistant/...` -> `homeassistant/...`
-- `/addon_configs/...` -> `addon_configs/...`
+- `/addon_configs/...` -> `addon_configs/...` (explicit read-only mount via `all_app_configs`)
 
 Selected `.storage` audit data is enabled by default. Built-in ordinary filtering is documented in the App documentation; user include/exclude options are root-relative overrides.
 
 ## Current phase
 
-**0.1.1** — stable analytical mirror with guarded legacy-layout cutover cleanup.
+**0.1.2** — Supervisor mapping compatibility update; existing analytical mirror contract unchanged.
